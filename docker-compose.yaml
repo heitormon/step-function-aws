@@ -1,0 +1,10 @@
+version: "3.1"
+
+services:
+  step-function:
+    image: amazon/aws-stepfunctions-local
+    restart: always
+    ports:
+      - "8083:8083"
+    environment:
+      - LAMBDA_ENDPOINT=http://host.docker.internal:3001

@@ -1,0 +1,35 @@
+{
+    "Comment": "Funcao hello e bye world",
+    "StartAt": "InputFunction",
+    "States": {
+        "InputFunction": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:Input",
+            "ResultPath": "$.result",
+            "Next": "StructureMap"
+        },
+        "StructureMap": {
+            "Type": "Map",
+            "InputPath": "$.result",
+            "ItemsPath": "$.items",
+            "MaxConcurrency": 0,
+            "ResultPath": "$.detail.shipped",
+            "Next": "Transfer",
+            "Iterator": {
+                "StartAt": "ProducerFunction",
+                "States": {
+                    "ProducerFunction": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:lambda:us-east-1:123456789012:function:Producer",
+                        "End": true
+                    }
+                }
+            }
+        },
+        "Transfer": {
+            "Type": "Task",
+            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:Transfer",
+            "End": true
+        }
+    }
+}
