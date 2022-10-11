@@ -9,11 +9,6 @@ Description: >
 Globals:
   Function:
     Timeout: 3
-Parameters:
-  StepFunctionArn:
-    Type: String
-    Default: Empty
-    Description: Enter Step Function state machine ARN
 
 Resources:
   Input:
@@ -44,6 +39,7 @@ Resources:
 
   StateMachine:
     Type: AWS::StepFunctions::StateMachine
+    DependsOn: StateMachineRole
     Properties:
       StateMachineName: StateMachine
       DefinitionString: 
@@ -89,4 +85,25 @@ Resources:
             Producer: !GetAtt [ Producer, Arn ],
             Transfer: !GetAtt [ Transfer, Arn ]
           }
-      RoleArn: !Ref StepFunctionArn
+      RoleArn: !GetAtt [ StateMachineRole, Arn ]
+  StateMachineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      Policies:
+        - PolicyName: lambda
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-*'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - states.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+            
