@@ -9,6 +9,11 @@ Description: >
 Globals:
   Function:
     Timeout: 3
+Parameters:
+  StepFunctionArn:
+    Type: String
+    Default: Empty
+    Description: Enter Step Function state machine ARN
 
 Resources:
   Input:
@@ -25,7 +30,7 @@ Resources:
       CodeUri: lambda-handler/
       Handler: app.producerFunction
       Runtime: nodejs14.x
-      Timeout: 60
+      Timeout: 80
       Architectures:
         - x86_64
   Transfer:  
@@ -36,3 +41,52 @@ Resources:
       Runtime: nodejs14.x
       Architectures:
         - x86_64
+
+  StateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: StateMachine
+      DefinitionString: 
+        !Sub 
+          - |-
+            {
+              "Comment": "Funcao hello e bye world",
+              "StartAt": "InputFunction",
+              "States": {
+                  "InputFunction": {
+                      "Type": "Task",
+                      "Resource": "${Input}",
+                      "ResultPath": "$.result",
+                      "Next": "StructureMap"
+                  },
+                  "StructureMap": {
+                      "Type": "Map",
+                      "InputPath": "$.result",
+                      "ItemsPath": "$.items",
+                      "MaxConcurrency": 0,
+                      "ResultPath": "$.detail.shipped",
+                      "Next": "Transfer",
+                      "Iterator": {
+                          "StartAt": "ProducerFunction",
+                          "States": {
+                              "ProducerFunction": {
+                                  "Type": "Task",
+                                  "Resource": "${Producer}",
+                                  "End": true
+                              }
+                          }
+                      }
+                  },
+                  "Transfer": {
+                      "Type": "Task",
+                      "Resource": "${Transfer}",
+                      "End": true
+                  }
+              }
+            } 
+          - {
+            Input: !GetAtt [ Input, Arn ],
+            Producer: !GetAtt [ Producer, Arn ],
+            Transfer: !GetAtt [ Transfer, Arn ]
+          }
+      RoleArn: !Ref StepFunctionArn

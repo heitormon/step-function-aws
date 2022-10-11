@@ -37,9 +37,8 @@ exports.producerFunction = async (event, _) => {
     try {
         console.log("producerFunction")
         console.log("event: ", event.length)
-        for (i = 0; event.length; i++) {
-            await new Promise(r => setTimeout(r, 1000));
-        }
+        await new Promise(r => setTimeout(r, event.length * 1000));
+        console.log(`producerFunction ${event.length} finalizado`)
     } catch (err) {
         console.log(err);
         return err;
